@@ -1,532 +1,571 @@
-// pages/index.tsx
-
-import { useState, useEffect } from 'react'
-import sanitizeText from '../utils/sanitizeText'
-import formatToDDMMYY from '../utils/formatToDDMMYY'
-
-const platformOptions = [
-  { label: 'Facebook', value: 'facebook' },
-  { label: 'Google Ads', value: 'google_ads' },
-  { label: 'Microsoft Ads', value: 'microsoft_ads' },
-  { label: 'TikTok', value: 'tiktok' },
-  { label: 'LinkedIn', value: 'linkedin' },
-]
-
-const campaignTypesByPlatform: Record<string, { label: string; value: string }[]> = {
-  facebook: [
-    { label: 'Conversions', value: 'conv' },
-    { label: 'Lead Generation', value: 'lg' },
-    { label: 'Brand Awareness', value: 'awr' },
-    { label: 'Reach', value: 'reach' },
-    { label: 'Traffic', value: 'trfc' },
-    { label: 'Engagement', value: 'eng' },
-    { label: 'Video Views', value: 'vv' },
-    { label: 'Messages', value: 'msg' },
-    { label: 'Boost', value: 'bst' },
-  ],
-  google_ads: [
-    { label: 'Search', value: 'srch' },
-    { label: 'Display / GDN', value: 'gdn' },
-    { label: 'Discovery', value: 'disc' },
-    { label: 'Performance Max', value: 'pmax' },
-    { label: 'YouTube (video)', value: 'yt' },
-  ],
-  microsoft_ads: [
-    { label: 'Search', value: 'srch' },
-    { label: 'Audience Ads / MAN', value: 'man' },
-    { label: 'Smart Search Campaign', value: 'smrt' },
-  ],
-  tiktok: [
-    { label: 'Conversions', value: 'conv' },
-    { label: 'Lead Generation', value: 'lg' },
-    { label: 'Reach', value: 'reach' },
-    { label: 'Traffic', value: 'trfc' },
-    { label: 'Video Views', value: 'vv' },
-  ],
-  linkedin: [
-    { label: 'Conversions', value: 'conv' },
-    { label: 'Lead Generation', value: 'lg' },
-    { label: 'Brand Awareness', value: 'awr' },
-    { label: 'Website Visits (Traffic)', value: 'trfc' },
-    { label: 'Engagement', value: 'eng' },
-    { label: 'Video Views', value: 'vv' },
-  ],
-}
-
-const adTypesByPlatform: Record<string, { label: string; value: string }[]> = {
-  facebook: [
-    { label: 'Image', value: 'img' },
-    { label: 'Video', value: 'vid' },
-    { label: 'Carousel', value: 'crsel' },
-    { label: 'Dynamic Creative Ad (DCO)', value: 'dyn' },
-    { label: 'GIF', value: 'gif' },
-  ],
-  google_ads: [
-    { label: 'Responsive Search Ad', value: 'rsa' },
-    { label: 'Call Ad', value: 'call' },
-    { label: 'Dynamic Search Ad', value: 'dsa' },
-    { label: 'Video Ad', value: 'vid' },
-    { label: 'Responsive Display Ad', value: 'rda' },
-    { label: 'Discovery Carousel Ad', value: 'dca' },
-    { label: 'Discovery Ad', value: 'disco' },
-    { label: 'Masthead Ads', value: 'mast' },
-    { label: 'In-feed Ads', value: 'infd' },
-    { label: 'Bumper Ads (6s)', value: 'bmp' },
-    { label: 'Skippable In-Stream Ads', value: 'skr' },
-    { label: 'Non-skippable In-Stream Ads', value: 'nsk' },
-    { label: 'TrueView Ads', value: 'tvw' },
-    { label: 'Shorts Ads', value: 'shr' },
-  ],
-  microsoft_ads: [
-    { label: 'Expanded Text Ad', value: 'xta' },
-    { label: 'Responsive Search Ads', value: 'rsa' },
-    { label: 'Dynamic Search Ads', value: 'dsa' },
-    { label: 'Bing Smart Search Ads', value: 'bss' },
-    { label: 'Audience Ads', value: 'aud' },
-    { label: 'Multimedia Ads', value: 'mmd' },
-  ],
-  tiktok: [
-    { label: 'Image', value: 'img' },
-    { label: 'Video', value: 'vid' },
-    { label: 'Spark Ads', value: 'spk' },
-    { label: 'Carousel Ads', value: 'crsel' },
-  ],
-  linkedin: [
-    { label: 'Image', value: 'img' },
-    { label: 'Video', value: 'vid' },
-    { label: 'Carousel', value: 'crsel' },
-    { label: 'Text', value: 'txt' },
-    { label: 'Conversation', value: 'con' },
-    { label: 'Spotlight', value: 'spt' },
-    { label: 'Message', value: 'msg' },
-  ],
-}
-
-const countryList = [
-  'All','United States','Israel','Austria','Belgium','Bulgaria','Croatia',
-  'Cyprus','Czechia','Denmark','Estonia','Finland','France','Germany','Greece',
-  'Hungary','Ireland','Italy','Latvia','Lithuania','Luxembourg','Malta','Netherlands',
-  'Poland','Portugal','Romania','Slovakia','Slovenia','Spain','Sweden'
-] as const
-
-const genders = [
-  { label: 'All', value: 'all' },
-  { label: 'Female/Woman', value: 'f' },
-  { label: 'Man/Male', value: 'm' },
-]
-
-const languages = [
-  { label: 'All', value: 'all' },
-  { label: 'English', value: 'en' },
-  { label: 'Spanish', value: 'es' },
-  { label: 'Hebrew', value: 'he' },
-  { label: 'French', value: 'fr' },
-  { label: 'Romanian', value: 'ro' },
-  { label: 'Arabic', value: 'ar' },
-  { label: 'Russian', value: 'ru' },
-  { label: 'German', value: 'de' },
-  { label: 'Portuguese', value: 'pt' },
-]
+import { useState, useEffect } from 'react';
+import sanitizeText from '../utils/sanitizeText';
+import formatToDDMMYY from '../utils/formatToDDMMYY';
 
 export default function Home() {
-  // inputs
-  const [platform, setPlatform] = useState<string>('')
-  const [product, setProduct] = useState<string>('')
-  const [campType, setCampType] = useState<string>('')
-  const [campDate, setCampDate] = useState<string>('')
-  const [campTheme, setCampTheme] = useState<string>('')
+  // --- State for inputs ---
+  const [platform, setPlatform] = useState('');
+  const [product, setProduct] = useState('');
+  const [campType, setCampType] = useState('');
+  const [campTheme, setCampTheme] = useState('');
+  const [campDate, setCampDate] = useState('');
+  const [adsetTheme, setAdsetTheme] = useState('');
+  const [targetType, setTargetType] = useState('');
+  const [countries, setCountries] = useState<string[]>([]);
+  const [scz, setScz] = useState('');
+  const [ageMin, setAgeMin] = useState('');
+  const [ageMax, setAgeMax] = useState('');
+  const [gender, setGender] = useState('');
+  const [language, setLanguage] = useState('');
+  const [matchType, setMatchType] = useState('');
+  const [adsetDate, setAdsetDate] = useState('');
+  const [adType, setAdType] = useState('');
+  const [adTheme, setAdTheme] = useState('');
+  const [adDate, setAdDate] = useState('');
 
-  const [adsetTheme, setAdsetTheme] = useState<string>('')
-  const [targeting, setTargeting] = useState<string>('')
-  const [countries, setCountries] = useState<string[]>(['All'])
-  const [stateZip, setStateZip] = useState<string>('')
-  const [ageMin, setAgeMin] = useState<string>('')
-  const [ageMax, setAgeMax] = useState<string>('')
-  const [gender, setGender] = useState<string>('')
-  const [language, setLanguage] = useState<string>('')
-  const [matchType, setMatchType] = useState<string>('')
-  const [adsetDate, setAdsetDate] = useState<string>('')
+  // --- State for outputs ---
+  const [campaignName, setCampaignName] = useState('na_na_na');
+  const [adsetName, setAdsetName]       = useState('na_na_na_na_na_na_na_na_na_na');
+  const [adName, setAdName]             = useState('na_na_na_na_na');
+  const [utm, setUtm]                   = useState('');
+  const [fullUrl, setFullUrl]           = useState('');
 
-  const [adType, setAdType] = useState<string>('')
-  const [adDate, setAdDate] = useState<string>('')
-  const [adTheme, setAdTheme] = useState<string>('')
+  // --- Option Definitions ---
+  const platformOptions = [
+    { label: 'Facebook', value: 'facebook' },
+    { label: 'Google Ads', value: 'google_ads' },
+    { label: 'Microsoft Ads', value: 'microsoft_ads' },
+    { label: 'TikTok', value: 'tiktok' },
+    { label: 'LinkedIn', value: 'linkedin' },
+  ];
 
-  // outputs
-  const [campaignName, setCampaignName] = useState<string>('na_na_na_na')
-  const [adSetName, setAdSetName] = useState<string>('na')
-  const [adName, setAdName] = useState<string>('na')
-  const [utmString, setUtmString] = useState<string>('No UTM generated yet.')
-  const [finalUrl, setFinalUrl] = useState<string>('')
+  const campaignTypesByPlatform: Record<string, { label:string, value:string }[]> = {
+    facebook: [
+      { label: 'Conversions', value: 'conv' },
+      { label: 'Lead Generation', value: 'lg' },
+      { label: 'Brand Awareness', value: 'awr' },
+      { label: 'Reach', value: 'reach' },
+      { label: 'Traffic', value: 'trfc' },
+      { label: 'Engagement', value: 'eng' },
+      { label: 'Video Views', value: 'vv' },
+      { label: 'Messages', value: 'msg' },
+      { label: 'Boost', value: 'bst' },
+    ],
+    google_ads: [
+      { label: 'Search', value: 'srch' },
+      { label: 'Display / GDN', value: 'gdn' },
+      { label: 'Discovery', value: 'disc' },
+      { label: 'Performance Max', value: 'pmax' },
+      { label: 'YouTube (video)', value: 'yt' },
+    ],
+    microsoft_ads: [
+      { label: 'Search', value: 'srch' },
+      { label: 'Audience Ads / MAN', value: 'man' },
+      { label: 'Smart Search Campaign', value: 'smrt' },
+    ],
+    tiktok: [
+      { label: 'Conversions', value: 'conv' },
+      { label: 'Lead Generation', value: 'lg' },
+      { label: 'Reach', value: 'reach' },
+      { label: 'Traffic', value: 'trfc' },
+      { label: 'Video Views', value: 'vv' },
+    ],
+    linkedin: [
+      { label: 'Conversions', value: 'conv' },
+      { label: 'Lead Generation', value: 'lg' },
+      { label: 'Brand Awareness', value: 'awr' },
+      { label: 'Website Visits (Traffic)', value: 'trfc' },
+      { label: 'Engagement', value: 'eng' },
+      { label: 'Video Views', value: 'vv' },
+    ],
+  };
 
-  // helper to sanitize
-  const seg = (v: string) => (sanitizeText(v) || 'na').replace(/\s+/g, '+')
+  const adTypesByPlatform: Record<string, { label:string, value:string }[]> = {
+    facebook: [
+      { label: 'Image', value: 'img' },
+      { label: 'Video', value: 'vid' },
+      { label: 'Carousel', value: 'crsel' },
+      { label: 'Dynamic Creative Ad (DCO)', value: 'dyn' },
+      { label: 'GIF', value: 'gif' },
+    ],
+    google_ads: [
+      { label: 'Responsive Search Ad', value: 'rsa' },
+      { label: 'Call Ad', value: 'call' },
+      { label: 'Dynamic Search Ad', value: 'dsa' },
+      { label: 'Video Ad', value: 'vid' },
+      { label: 'Responsive Display Ad', value: 'rda' },
+      { label: 'Discovery Carousel Ad', value: 'dca' },
+      { label: 'Discovery Ad', value: 'disco' },
+      { label: 'Bumper Ads', value: 'bmp' },
+      { label: 'Skippable In-Stream Ads', value: 'skr' },
+    ],
+    microsoft_ads: [
+      { label: 'Expanded Text Ad', value: 'xta' },
+      { label: 'Responsive Search Ads', value: 'rsa' },
+      { label: 'Dynamic Search Ads', value: 'dsa' },
+      { label: 'Bing Smart Search Ads', value: 'bss' },
+    ],
+    tiktok: [
+      { label: 'Image', value: 'img' },
+      { label: 'Video', value: 'vid' },
+      { label: 'Spark Ads', value: 'spk' },
+      { label: 'Carousel Ads', value: 'car' },
+    ],
+    linkedin: [
+      { label: 'Image', value: 'img' },
+      { label: 'Video', value: 'vid' },
+      { label: 'Carousel', value: 'crsel' },
+      { label: 'Text', value: 'txt' },
+      { label: 'Conversation', value: 'con' },
+      { label: 'Spotlight', value: 'spt' },
+      { label: 'Message', value: 'msg' },
+    ],
+  };
 
+  const countryList = [
+    { label:'All', value:'all'},{ label:'United States', value:'us'},{ label:'Israel', value:'il'},
+    { label:'Austria', value:'at'},{ label:'Belgium', value:'be'},{ label:'Bulgaria', value:'bg'},
+    { label:'Croatia', value:'hr'},{ label:'Cyprus', value:'cy'},{ label:'Czechia', value:'cz'},
+    { label:'Denmark', value:'dk'},{ label:'Estonia', value:'ee'},{ label:'Finland', value:'fi'},
+    { label:'France', value:'fr'},{ label:'Germany', value:'de'},{ label:'Greece', value:'gr'},
+    { label:'Hungary', value:'hu'},{ label:'Ireland', value:'ie'},{ label:'Italy', value:'it'},
+    { label:'Latvia', value:'lv'},{ label:'Lithuania', value:'lt'},{ label:'Luxembourg', value:'lu'},
+    { label:'Malta', value:'mt'},{ label:'Netherlands', value:'nl'},{ label:'Poland', value:'pl'},
+    { label:'Portugal', value:'pt'},{ label:'Romania', value:'ro'},{ label:'Slovakia', value:'sk'},
+    { label:'Slovenia', value:'si'},{ label:'Spain', value:'es'},{ label:'Sweden', value:'se'},
+  ];
+
+  const genderOptions = [
+    { label:'All', value:'all' },
+    { label:'Female/Woman', value:'f' },
+    { label:'Male/Man', value:'m' },
+  ];
+
+  const languageOptions = [
+    { label:'All', value:'all' },
+    { label:'English', value:'en' },
+    { label:'Spanish', value:'es' },
+    { label:'Hebrew', value:'he' },
+    { label:'Romanian', value:'ro' },
+    { label:'Arabic', value:'ar' },
+    { label:'Russian', value:'ru' },
+    { label:'German', value:'de' },
+    { label:'Portuguese', value:'pt' },
+  ];
+
+  const matchOptions = [
+    { label:'na', value:'na' },
+    { label:'Exact', value:'exact' },
+    { label:'Phrase', value:'phrase' },
+    { label:'Broad', value:'broad' },
+  ];
+
+  // --- Build names live ---
   useEffect(() => {
-    // Build Campaign Name
-    const pr = seg(product)
-    const tp = campType || 'na'
-    const dt = campDate ? formatToDDMMYY(campDate) : 'na'
-    const th = campTheme ? seg(campTheme) : 'na'
-    setCampaignName(`${pr}_${tp}_${dt}_${th}`)
+    const seg = (val?: string) =>
+      (sanitizeText(val || '') || 'na').replace(/\s+/g,'+');
 
-    // Build Ad Set Name
-    const cs = countries.length ? countries.map(seg).join('-') : 'na'
-    const sz = stateZip ? seg(stateZip) : 'na'
-    const ag = `${ageMin||'na'}-${ageMax||'na'}`
-    const gd = gender || 'na'
-    const lg = language || 'na'
-    const mt = matchType || 'na'
-    const asDt = adsetDate ? formatToDDMMYY(adsetDate) : 'na'
-    const asTh = adsetTheme ? seg(adsetTheme) : 'na'
-    setAdSetName([pr,tp,cs,sz,ag,gd,lg,mt,asDt,asTh].join('_'))
+    const p = seg(product);
+    const cType = campType || 'na';
+    const theme = campTheme ? seg(campTheme) : 'na';
+    const cDate = campDate ? formatToDDMMYY(campDate) : 'na';
 
-    // Build Ad Name
-    const at = adType || 'na'
-    const adDt = adDate ? formatToDDMMYY(adDate) : 'na'
-    const adThSeg = adTheme ? seg(adTheme) : 'na'
-    setAdName(`${pr}_${tp}_${at}_${adDt}_${adThSeg}`)
+    setCampaignName(`${p}_${cType}_${cDate}_${theme}`);
+
+    const tgt = targetType || 'na';
+    const ctry = countries.length ? countries.join('-') : 'na';
+    const sczSeg = scz ? seg(scz) : 'na';
+    const ageSeg = `${ageMin||'na'}-${ageMax||'na'}`;
+    const gen = gender || 'na';
+    const lang = language || 'na';
+    const match = matchType || 'na';
+    const aDate = adsetDate ? formatToDDMMYY(adsetDate) : 'na';
+    const aTheme = adsetTheme ? seg(adsetTheme) : 'na';
+    setAdsetName(
+      `${p}_${cType}_${tgt}_${ctry}_${sczSeg}_${ageSeg}_${gen}_${lang}_${match}_${aDate}_${aTheme}`
+    );
+
+    const atype = adType || 'na';
+    const adD = adDate ? formatToDDMMYY(adDate) : 'na';
+    const atheme = adTheme ? seg(adTheme) : 'na';
+    setAdName(`${p}_${cType}_${atype}_${adD}_${atheme}`);
   }, [
     product, campType, campDate, campTheme,
-    targeting, countries, stateZip, ageMin, ageMax,
-    gender, language, matchType, adsetDate, adsetTheme,
+    adsetTheme, targetType, countries, scz, ageMin, ageMax,
+    gender, language, matchType, adsetDate,
     adType, adDate, adTheme
-  ])
+  ]);
 
-  // UTM generator
-  const generateUTM = () => {
-    if (!platform) return alert('Please choose Platform')
-    let utm = ''
+  // --- UTM generation ---
+  function onGenerateUtm() {
+    if (!platform) {
+      const note = document.createElement('div');
+      note.innerText = 'Please choose Platform';
+      note.className = 'fixed bottom-5 right-5 bg-black/70 text-white p-2 rounded';
+      document.body.appendChild(note);
+      setTimeout(()=> note.remove(), 2000);
+      return;
+    }
+    let str = '';
     switch(platform) {
       case 'facebook':
-        utm = `utm_source=facebook&utm_medium=paid&utm_campaign={{campaign.name}}&utm_adset={{adset.name}}&utm_ad={{ad.name}}&cid={{campaign.id}}&asid={{adset.id}}&aid={{ad.id}}&fsource={{site_source_name}}&placement={{placement}}`
-        break
+        str = `utm_source=facebook&utm_medium=paid&utm_campaign={{campaign.name}}&utm_adset={{adset.name}}&utm_ad={{ad.name}}&cid={{campaign.id}}&asid={{adset.id}}&aid={{ad.id}}&fsource={{site_source_name}}&placement={{placement}}`;
+        break;
       case 'google_ads':
-        utm = `{lpurl}?utm_source=google&utm_medium=cpc&utm_campaign={_campaign}&utm_adset={_adset}&utm_ad={_ad}&utm_term={keyword}&adpos={adposition}&device={device}&creative={creative}&placement={placement}&cid={campaignid}&asid={adgroupid}&kmt={matchtype}&net={network}&device_model={devicemodel}&target={targetid}`
-        break
+        str = `{lpurl}?utm_source=google&utm_medium=cpc&utm_campaign={campaign}&utm_adset={adset}&utm_ad={ad}&utm_term={keyword}&adpos={adposition}&device={device}&creative={creative}&placement={placement}&cid={campaignid}&asid={adgroupid}&kmt={matchtype}&net={network}&device_model={devicemodel}&target={targetid}`;
+        break;
       case 'microsoft_ads':
-        utm = `{lpurl}?utm_source=bing&utm_medium=cpc&cid={CampaignId}&utm_campaign={Campaign}&asid={AdGroupId}&utm_adset={AdGroup}&aid={AdId}&kmt={MatchType}&utm_term={keyword:default}-{QueryString}&target={TargetId}&net={Network}&device={Device}`
-        break
+        str = `{lpurl}?utm_source=bing&utm_medium=cpc&cid={CampaignId}&utm_campaign={Campaign}&asid={AdGroupId}&utm_adset={AdGroup}&aid={AdId}&kmt={MatchType}&utm_term={keyword:default}-{QueryString}&target={TargetId}&net={Network}&device={Device}`;
+        break;
       case 'tiktok':
-        utm = `utm_source=tiktok&utm_medium=paid&utm_campaign=__CAMPAIGN_NAME__&utm_adset=__ADSET_NAME__&utm_ad=__AD_NAME__&cid=__CAMPAIGN_ID__&asid=__ADSET_ID__&aid=__AD_ID__&placement=__PLACEMENT__&ttclid=__CLICKID__`
-        break
+        str = `utm_source=tiktok&utm_medium=paid&utm_campaign=__CAMPAIGN_NAME__&utm_adset=__AID_NAME__&utm_ad=__CID_NAME__&cid=__CAMPAIGN_ID__&asid=__AID__&aid=__CID__&placement=__PLACEMENT__&ttclid=__CLICKID__`;
+        break;
       case 'linkedin':
-        utm = `utm_source=linkedin&utm_medium=paid_social&utm_campaign={{campaign.name}}&utm_content={{ad.name}}&account_id={{ACCOUNT_ID}}&account_name={{ACCOUNT_NAME}}&campaign_id={{CAMPAIGN_ID}}&campaign_group_id={{CAMPAIGN_GROUP_ID}}&creative_id={{CREATIVE_ID}}`
-        break
+        str = `utm_source=linkedin&utm_medium=paid_social&utm_campaign={{campaign.name}}&utm_content={{ad.name}}`;
+        break;
     }
-    setUtmString(utm)
+    setUtm(str);
   }
 
-  // Final URL
-  const generateURL = () => {
-    const inp = document.getElementById('landing-page') as HTMLInputElement
-    if (!inp.value) return alert('Please enter Landing Page URL')
-    const sep = inp.value.includes('?') ? '&' : '?'
-    setFinalUrl(`${inp.value}${sep}${utmString}`)
+  // --- Full URL generation ---
+  function onGenerateUrl() {
+    const inp = document.getElementById('landing-page') as HTMLInputElement;
+    if (!inp.value) return alert('Please enter Landing Page URL');
+    const sep = inp.value.includes('?') ? '&' : '?';
+    setFullUrl(`${inp.value}${sep}${utm}`);
   }
 
-  // copy helper
-  const doCopy = (text: string) => {
-    navigator.clipboard.writeText(text)
+  // --- Clipboard helpers ---
+  function copyText(txt: string) {
+    navigator.clipboard.writeText(txt);
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 p-8 text-gray-200">
-      <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-8">
-        {/* Left column */}
+    <div className="bg-gray-900 min-h-screen p-8 text-gray-200">
+      <style jsx global>{`
+        input[type="date"]::-webkit-calendar-picker-indicator {
+          filter: invert(1);
+        }
+      `}</style>
+      <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8">
+        {/* ------------------ LEFT INPUTS ------------------ */}
         <div className="space-y-8">
-          {/* Campaign config */}
+          {/* Campaign Name */}
           <div className="bg-gray-800 p-6 rounded-lg space-y-4">
-            <h2 className="text-green-500 text-xl font-semibold">Campaign Name</h2>
-            <label className="block">
-              <span className="text-sm">Platform ⓘ</span>
+            <h3 className="text-green-500 text-xl font-semibold">Campaign Name</h3>
+            <div>
+              <label className="block text-sm">Platform ⓘ</label>
               <select
-                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                className="mt-1 block w-full bg-gray-700 text-gray-200 rounded border border-gray-600"
                 value={platform}
-                onChange={e=>{
-                  setPlatform(e.target.value)
-                  setCampType('')
-                }}
+                onChange={e=>{ setPlatform(e.target.value); setCampType(''); setAdType(''); }}
               >
                 <option value="">Select platform</option>
-                {platformOptions.map(p=>(
-                  <option key={p.value} value={p.value}>{p.label}</option>
+                {platformOptions.map(o=>(
+                  <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
               </select>
-            </label>
-            <label className="block">
-              <span className="text-sm">Product ⓘ</span>
+            </div>
+            <div>
+              <label className="block text-sm">Product ⓘ</label>
               <input
-                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                type="text"
+                className="mt-1 block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2"
                 placeholder="Enter product"
                 value={product}
                 onChange={e=>setProduct(e.target.value)}
               />
-            </label>
-            <label className="block">
-              <span className="text-sm">Campaign Type ⓘ</span>
+            </div>
+            <div>
+              <label className="block text-sm">Campaign Type ⓘ</label>
               <select
+                className="mt-1 block w-full bg-gray-700 text-gray-200 rounded border border-gray-600"
                 disabled={!platform}
-                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
                 value={campType}
                 onChange={e=>setCampType(e.target.value)}
               >
                 <option value="">{platform ? 'Select type' : 'Select platform first'}</option>
-                {platform && campaignTypesByPlatform[platform].map(ct=>(
-                  <option key={ct.value} value={ct.value}>{ct.label}</option>
+                {platform && campaignTypesByPlatform[platform].map(o=>(
+                  <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
               </select>
-            </label>
-            <label className="block relative">
-              <span className="text-sm">Campaign Date (optional) ⓘ</span>
+            </div>
+            <div>
+              <label className="block text-sm">Campaign Theme (optional) ⓘ</label>
               <input
-                type="date"
-                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 pr-10"
-                value={campDate}
-                onChange={e=>setCampDate(e.target.value)}
-              />
-              <svg className="absolute right-3 bottom-3 w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M..." /></svg>
-            </label>
-            <label className="block">
-              <span className="text-sm">Campaign Theme (optional) ⓘ</span>
-              <input
-                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                type="text"
+                className="mt-1 block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2"
                 placeholder="Enter theme"
                 value={campTheme}
                 onChange={e=>setCampTheme(e.target.value)}
               />
-            </label>
+            </div>
+            <div>
+              <label className="block text-sm">Campaign Date (optional) ⓘ</label>
+              <input
+                type="date"
+                className="mt-1 block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2"
+                placeholder="dd/mm/yyyy"
+                value={campDate}
+                onChange={e=>setCampDate(e.target.value)}
+              />
+            </div>
           </div>
 
-          {/* Ad Set config */}
+          {/* Ad Set Name */}
           <div className="bg-gray-800 p-6 rounded-lg space-y-4">
-            <h2 className="text-green-500 text-xl font-semibold">Ad Set Name</h2>
-            <label className="block">
-              <span className="text-sm">Ad Set Theme (optional) ⓘ</span>
+            <h3 className="text-green-500 text-xl font-semibold">Ad Set Name</h3>
+            <div>
+              <label className="block text-sm">Ad Set Theme (optional) ⓘ</label>
               <input
-                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                type="text"
+                className="mt-1 block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2"
                 placeholder="Enter ad set theme"
                 value={adsetTheme}
                 onChange={e=>setAdsetTheme(e.target.value)}
               />
-            </label>
-            <label className="block">
-              <span className="text-sm">Targeting type ⓘ</span>
+            </div>
+            <div>
+              <label className="block text-sm">Targeting type ⓘ</label>
               <select
-                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
-                value={targeting}
-                onChange={e=>setTargeting(e.target.value)}
+                className="mt-1 block w-full bg-gray-700 text-gray-200 rounded border border-gray-600"
+                value={targetType}
+                onChange={e=>setTargetType(e.target.value)}
               >
                 <option value="">Select type</option>
                 <option value="lal">Lookalike</option>
                 <option value="rem">Remarketing</option>
-                <option value="wide">Wide</option>
+                <option value="wide">Wide (prospecting)</option>
               </select>
-            </label>
-            <label className="block">
-              <span className="text-sm">Countries ⓘ</span>
+            </div>
+            <div>
+              <label className="block text-sm">Countries ⓘ</label>
               <select
                 multiple
-                size={7}
-                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                size={1}
+                className="mt-1 block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 cursor-pointer"
                 value={countries}
                 onChange={e=>{
-                  const opts = Array.from(e.target.selectedOptions).map(o=>o.value)
-                  setCountries(opts)
+                  const vals = Array.from(e.target.selectedOptions).map(o=>o.value);
+                  setCountries(vals);
                 }}
               >
-                {countryList.map(c=>(
-                  <option key={c} value={c}>{c}</option>
+                <option value="" disabled>Select countries</option>
+                {countryList.map(o=>(
+                  <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
               </select>
-            </label>
-            <label className="block">
-              <span className="text-sm">State/City/Zip(s) (optional) ⓘ</span>
+            </div>
+            <div>
+              <label className="block text-sm">State/City/Zip(s) (optional) ⓘ</label>
               <input
-                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                type="text"
+                className="mt-1 block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2"
                 placeholder="e.g. CA-LosAngeles-90001"
-                value={stateZip}
-                onChange={e=>setStateZip(e.target.value)}
+                value={scz}
+                onChange={e=>setScz(e.target.value)}
               />
-            </label>
-            {/* Age / Gender / Language row */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <span className="text-sm">Age ⓘ</span>
-                <div className="flex space-x-2 mt-1">
+            </div>
+            <div className="flex space-x-4">
+              <div className="flex-1">
+                <label className="block text-sm">Age ⓘ</label>
+                <div className="flex space-x-2">
                   <select
-                    className="w-1/2 bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                    className="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2"
                     value={ageMin}
                     onChange={e=>setAgeMin(e.target.value)}
                   >
                     <option value="">Min</option>
-                    {[...Array(48).keys()].map(n=>
-                      <option key={n} value={`${n+18}`}>{n+18}</option>
-                    )}
+                    {Array.from({length:48},(_,i)=>i+18).concat(65).map(n=>(
+                      <option key={n} value={n===65?'65+':n}>{n===65?'65+':n}</option>
+                    ))}
                   </select>
                   <select
-                    className="w-1/2 bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                    className="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2"
                     value={ageMax}
                     onChange={e=>setAgeMax(e.target.value)}
                   >
                     <option value="">Max</option>
-                    {[...Array(47).keys()].map(n=>
-                      <option key={n} value={`${n+18}`}>{n+18}</option>
-                    )}
-                    <option value="65+">65+</option>
+                    {Array.from({length:48},(_,i)=>i+18).concat(65).map(n=>(
+                      <option key={n} value={n===65?'65+':n}>{n===65?'65+':n}</option>
+                    ))}
                   </select>
                 </div>
               </div>
-              <div>
-                <span className="text-sm">Gender ⓘ</span>
+            </div>
+            <div className="flex space-x-4">
+              <div className="flex-1">
+                <label className="block text-sm">Gender ⓘ</label>
                 <select
-                  className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                  className="mt-1 block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2"
                   value={gender}
                   onChange={e=>setGender(e.target.value)}
                 >
                   <option value="">Select gender</option>
-                  {genders.map(g=>(
-                    <option key={g.value} value={g.value}>{g.label}</option>
+                  {genderOptions.map(o=>(
+                    <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
                 </select>
               </div>
-              <div>
-                <span className="text-sm">Language ⓘ</span>
+              <div className="flex-1">
+                <label className="block text-sm">Language ⓘ</label>
                 <select
-                  className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                  className="mt-1 block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2"
                   value={language}
                   onChange={e=>setLanguage(e.target.value)}
                 >
                   <option value="">Select language</option>
-                  {languages.map(l=>(
-                    <option key={l.value} value={l.value}>{l.label}</option>
+                  {languageOptions.map(o=>(
+                    <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
                 </select>
               </div>
             </div>
-            <label className="block mt-4">
-              <span className="text-sm">Match Type (optional) ⓘ</span>
+            <div>
+              <label className="block text-sm">Match Type (optional) ⓘ</label>
               <select
-                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                className="mt-1 block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2"
                 value={matchType}
                 onChange={e=>setMatchType(e.target.value)}
               >
                 <option value="">Select match type</option>
-                <option value="na">na</option>
-                <option value="exact">exact</option>
-                <option value="phrase">phrase</option>
-                <option value="broad">broad</option>
+                {matchOptions.map(o=>(
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
               </select>
-            </label>
-            <label className="block relative mt-4">
-              <span className="text-sm">Ad Set Date (optional) ⓘ</span>
+            </div>
+            <div>
+              <label className="block text-sm">Ad Set Date (optional) ⓘ</label>
               <input
                 type="date"
-                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 pr-10"
+                className="mt-1 block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2"
                 value={adsetDate}
                 onChange={e=>setAdsetDate(e.target.value)}
               />
-              <svg className="absolute right-3 bottom-3 w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M..." /></svg>
-            </label>
+            </div>
           </div>
 
-          {/* Ad config */}
+          {/* Ad Name Builder */}
           <div className="bg-gray-800 p-6 rounded-lg space-y-4">
-            <h2 className="text-green-500 text-xl font-semibold">Ad Name</h2>
-            <label className="block">
-              <span className="text-sm">Ad Type ⓘ</span>
+            <h3 className="text-green-500 text-xl font-semibold">Ad Name</h3>
+            <div>
+              <label className="block text-sm">Ad Type ⓘ</label>
               <select
-                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                className="mt-1 block w-full bg-gray-700 text-gray-200 rounded border border-gray-600"
+                disabled={!platform}
                 value={adType}
                 onChange={e=>setAdType(e.target.value)}
               >
                 <option value="">Select ad type</option>
-                {platform && adTypesByPlatform[platform].map(a=>(
-                  <option key={a.value} value={a.value}>{a.label}</option>
+                {platform && adTypesByPlatform[platform].map(o=>(
+                  <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
               </select>
-            </label>
-            <label className="block relative">
-              <span className="text-sm">Ad Date (optional) ⓘ</span>
+            </div>
+            <div>
+              <label className="block text-sm">Ad Theme ⓘ</label>
               <input
-                type="date"
-                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 pr-10"
-                value={adDate}
-                onChange={e=>setAdDate(e.target.value)}
-              />
-              <svg className="absolute right-3 bottom-3 w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M..." /></svg>
-            </label>
-            <label className="block">
-              <span className="text-sm">Ad Theme (optional) ⓘ</span>
-              <input
-                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                type="text"
+                className="mt-1 block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2"
                 placeholder="Enter ad theme"
                 value={adTheme}
                 onChange={e=>setAdTheme(e.target.value)}
               />
-            </label>
+            </div>
+            <div>
+              <label className="block text-sm">Ad Date ⓘ</label>
+              <input
+                type="date"
+                className="mt-1 block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2"
+                value={adDate}
+                onChange={e=>setAdDate(e.target.value)}
+              />
+            </div>
           </div>
         </div>
 
-        {/* Right column */}
+        {/* ------------------ RIGHT OUTPUTS ------------------ */}
         <div className="space-y-8">
           {/* Final Result */}
           <div className="bg-gray-800 p-6 rounded-lg space-y-4">
-            <h2 className="text-green-500 text-xl font-semibold">Final Result</h2>
-
-            <div className="flex justify-between">
-              <span className="font-medium">Campaign Name</span>
-              <button className="text-sm text-green-400" onClick={()=>doCopy(campaignName)}>Copy</button>
+            <h3 className="text-green-500 text-xl font-semibold">Final Result</h3>
+            <div className="space-y-3">
+              <div>
+                <span className="font-medium">Campaign Name</span>
+                <button
+                  className="text-green-400 text-sm float-right"
+                  onClick={()=>copyText(campaignName)}
+                >Copy</button>
+                <p className="mt-1">{campaignName}</p>
+              </div>
+              <div>
+                <span className="font-medium">Ad Set Name</span>
+                <button
+                  className="text-green-400 text-sm float-right"
+                  onClick={()=>copyText(adsetName)}
+                >Copy</button>
+                <p className="mt-1">{adsetName}</p>
+              </div>
+              <div>
+                <span className="font-medium">Ad Name</span>
+                <button
+                  className="text-green-400 text-sm float-right"
+                  onClick={()=>copyText(adName)}
+                >Copy</button>
+                <p className="mt-1">{adName}</p>
+              </div>
             </div>
-            <div className="break-all">{campaignName}</div>
-
-            <div className="flex justify-between mt-2">
-              <span className="font-medium">Ad Set Name</span>
-              <button className="text-sm text-green-400" onClick={()=>doCopy(adSetName)}>Copy</button>
-            </div>
-            <div className="break-all">{adSetName}</div>
-
-            <div className="flex justify-between mt-2">
-              <span className="font-medium">Ad Name</span>
-              <button className="text-sm text-green-400" onClick={()=>doCopy(adName)}>Copy</button>
-            </div>
-            <div className="break-all">{adName}</div>
           </div>
 
           {/* UTM Generator */}
           <div className="bg-gray-800 p-6 rounded-lg space-y-4">
-            <h2 className="text-green-500 text-xl font-semibold">UTM Generator</h2>
+            <h3 className="text-green-500 text-xl font-semibold">UTM Generator</h3>
             <textarea
-              className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 h-24"
+              className="w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2 h-24 resize-none"
               readOnly
-              value={utmString}
+              placeholder="No UTM generated yet."
+              value={utm}
             />
-            <div className="flex space-x-4">
-              <button className="bg-green-500 px-4 py-2 rounded text-sm" onClick={generateUTM}>Generate</button>
-              <button className="bg-gray-600 px-4 py-2 rounded text-sm" onClick={()=>doCopy(utmString)}>Copy</button>
+            <div className="flex space-x-2">
+              <button
+                className="bg-green-500 text-white px-4 py-2 rounded"
+                onClick={onGenerateUtm}
+              >Generate</button>
+              <button
+                className="bg-green-500 text-white px-4 py-2 rounded"
+                onClick={()=>copyText(utm)}
+              >Copy</button>
             </div>
           </div>
 
-          {/* Landing Page URL */}
+          {/* Final URL */}
           <div className="bg-gray-800 p-6 rounded-lg space-y-4">
-            <h2 className="text-green-500 text-xl font-semibold">Landing Page URL</h2>
+            <h3 className="text-green-500 text-xl font-semibold">Landing Page URL</h3>
             <input
               id="landing-page"
-              className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
+              type="url"
+              className="w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2"
               placeholder="https://www.cnn.com/"
             />
             <textarea
-              className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 h-24"
+              className="w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2 h-24 resize-none"
               readOnly
               placeholder="URL + UTM"
-              value={finalUrl}
+              value={fullUrl}
             />
-            <div className="flex space-x-4">
-              <button className="bg-green-500 px-4 py-2 rounded text-sm" onClick={generateURL}>Generate</button>
-              <button className="bg-gray-600 px-4 py-2 rounded text-sm" onClick={()=>doCopy(finalUrl)}>Copy</button>
+            <div className="flex space-x-2">
+              <button
+                className="bg-green-500 text-white px-4 py-2 rounded"
+                onClick={onGenerateUrl}
+              >Generate</button>
+              <button
+                className="bg-green-500 text-white px-4 py-2 rounded"
+                onClick={()=>copyText(fullUrl)}
+              >Copy</button>
             </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
