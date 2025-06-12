@@ -191,7 +191,8 @@ export default function Home() {
   }
 
   return (
-    <div className="container mx-auto p-6 grid grid-cols-2 gap-8">
+    <div className="min-h-screen" style={{backgroundColor: 'rgb(55, 65, 81)'}}>
+      <div className="container mx-auto p-6 grid grid-cols-2 gap-8">
       {/* Left */}
       <div>
         {/* Campaign Name */}
@@ -456,7 +457,12 @@ export default function Home() {
           <h2 className="text-lg font-semibold mb-4">UTM Generator</h2>
           <textarea
             readOnly
-            className="w-full p-2 h-20 bg-gray-700 text-white rounded border border-gray-600 mb-2 resize-none"
+            className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 mb-2 resize-none"
+            style={{
+              minHeight: '80px',
+              height: utmString ? 'auto' : '80px'
+            }}
+            rows={utmString ? Math.ceil(utmString.length / 80) + 1 : 4}
             value={utmString || 'No UTM generated yet.'}
           />
           <div className="flex space-x-4">
@@ -483,7 +489,18 @@ export default function Home() {
             className="w-full p-2 mb-2 bg-gray-700 text-white rounded border border-gray-600"
             placeholder="https://www.cnn.com/"
           />
-          <div className="flex space-x-4 mb-2">
+          <textarea
+            readOnly
+            className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 resize-none mb-2"
+            style={{
+              minHeight: '80px',
+              height: finalUrl ? 'auto' : '80px'
+            }}
+            rows={finalUrl ? Math.ceil(finalUrl.length / 80) + 1 : 4}
+            placeholder="URL + UTM"
+            value={finalUrl || ''}
+          />
+          <div className="flex space-x-4">
             <button
               onClick={generateURL}
               className="px-4 py-2 bg-green-500 rounded text-white"
@@ -497,12 +514,6 @@ export default function Home() {
               Copy
             </button>
           </div>
-          <textarea
-            readOnly
-            className="w-full p-2 h-20 bg-gray-700 text-white rounded border border-gray-600 resize-none"
-            placeholder="URL + UTM"
-            value={finalUrl || ''}
-          />
         </div>
       </div>
     </div>
