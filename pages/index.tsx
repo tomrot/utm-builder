@@ -126,7 +126,8 @@ export default function Home() {
     setCampaignName(`${p}_${t}_${d}_${th}`)
 
     // Ad Set Name:
-    // product_type_countries_stateZip_ageMin-ageMax_gender_language_match_date_theme
+    // product_type_targeting_countries_stateZip_ageMin-ageMax_gender_language_match_date_theme
+    const tar = targeting || 'na'
     const cs = countries ? seg(countries,'na') : 'na'
     const sz = stateZip ? seg(stateZip,'na') : 'na'
     const ag = `${ageMin||'na'}-${ageMax||'na'}`
@@ -136,7 +137,7 @@ export default function Home() {
     const ad = adSetDate ? formatToDDMMYY(adSetDate) : 'na'
     const ast = adSetTheme?seg(adSetTheme,'na'):'na'
     setAdSetName(
-      `${p}_${t}_${cs}_${sz}_${ag}_${gd}_${lg}_${mt}_${ad}_${ast}`
+      `${p}_${t}_${tar}_${cs}_${sz}_${ag}_${gd}_${lg}_${mt}_${ad}_${ast}`
     )
 
     // Ad Name: product_type_adType_date_theme
@@ -146,7 +147,7 @@ export default function Home() {
     setAdName(`${p}_${t}_${at}_${adt}_${ath}`)
   }, [
     product, campType, campDate, campTheme,
-    countries, stateZip, ageMin, ageMax,
+    targeting, countries, stateZip, ageMin, ageMax,
     gender, language, matchType, adSetDate, adSetTheme,
     adType, adDate, adTheme,
   ])
@@ -241,18 +242,18 @@ export default function Home() {
               onChange={e=>setCampTheme(e.target.value)}
             />
           </div>
-          <div className="mb-4 relative">
+          <div className="mb-4">
             <label className="block mb-1">Campaign Date (optional) ⓘ</label>
             <input
               type="date"
-              className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 pr-10"
-              style={{color:'#fff'}}
+              className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600"
+              style={{
+                colorScheme: 'dark',
+                color: '#fff'
+              }}
               value={campDate}
               onChange={e=>setCampDate(e.target.value)}
             />
-            <span className="absolute right-3 top-8 text-white pointer-events-none">
-              📅
-            </span>
           </div>
         </div>
 
@@ -287,6 +288,7 @@ export default function Home() {
               className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600"
               value={countries}
               onChange={e=>setCountries(e.target.value)}
+              size={1}
             >
               <option value="">Select country</option>
               {countryList.map(c=>(
@@ -303,32 +305,32 @@ export default function Home() {
               onChange={e=>setStateZip(e.target.value)}
             />
           </div>
-          <div className="flex space-x-4 mb-4">
-            <div className="flex-1">
-              <label className="block mb-1">Age ⓘ</label>
-              <div className="flex space-x-2">
-                <select
-                  className="w-1/2 p-2 bg-gray-700 text-white rounded border border-gray-600"
-                  value={ageMin}
-                  onChange={e=>setAgeMin(e.target.value)}
-                >
-                  <option value="">Min</option>
-                  {Array.from({length:48},(_,i)=>i+18).concat(65).map(n=>(
-                    <option key={n} value={n===65?'65+':n}>{n===65?'65+':n}</option>
-                  ))}
-                </select>
-                <select
-                  className="w-1/2 p-2 bg-gray-700 text-white rounded border border-gray-600"
-                  value={ageMax}
-                  onChange={e=>setAgeMax(e.target.value)}
-                >
-                  <option value="">Max</option>
-                  {Array.from({length:48},(_,i)=>i+18).concat(65).map(n=>(
-                    <option key={n} value={n===65?'65+':n}>{n===65?'65+':n}</option>
-                  ))}
-                </select>
-              </div>
+          <div className="mb-4">
+            <label className="block mb-1">Age ⓘ</label>
+            <div className="flex space-x-2">
+              <select
+                className="w-1/2 p-2 bg-gray-700 text-white rounded border border-gray-600"
+                value={ageMin}
+                onChange={e=>setAgeMin(e.target.value)}
+              >
+                <option value="">Min</option>
+                {Array.from({length:48},(_,i)=>i+18).concat(65).map(n=>(
+                  <option key={n} value={n===65?'65+':n}>{n===65?'65+':n}</option>
+                ))}
+              </select>
+              <select
+                className="w-1/2 p-2 bg-gray-700 text-white rounded border border-gray-600"
+                value={ageMax}
+                onChange={e=>setAgeMax(e.target.value)}
+              >
+                <option value="">Max</option>
+                {Array.from({length:48},(_,i)=>i+18).concat(65).map(n=>(
+                  <option key={n} value={n===65?'65+':n}>{n===65?'65+':n}</option>
+                ))}
+              </select>
             </div>
+          </div>
+          <div className="flex space-x-4 mb-4">
             <div className="flex-1">
               <label className="block mb-1">Gender ⓘ</label>
               <select
@@ -370,18 +372,18 @@ export default function Home() {
               <option value="broad">broad</option>
             </select>
           </div>
-          <div className="mb-4 relative">
+          <div className="mb-4">
             <label className="block mb-1">Ad Set Date (optional) ⓘ</label>
             <input
               type="date"
-              className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 pr-10"
-              style={{color:'#fff'}}
+              className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600"
+              style={{
+                colorScheme: 'dark',
+                color: '#fff'
+              }}
               value={adSetDate}
               onChange={e=>setAdSetDate(e.target.value)}
             />
-            <span className="absolute right-3 top-8 text-white pointer-events-none">
-              📅
-            </span>
           </div>
         </div>
 
@@ -402,18 +404,18 @@ export default function Home() {
               ))}
             </select>
           </div>
-          <div className="mb-4 relative">
+          <div className="mb-4">
             <label className="block mb-1">Ad Date ⓘ</label>
             <input
               type="date"
-              className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 pr-10"
-              style={{color:'#fff'}}
+              className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600"
+              style={{
+                colorScheme: 'dark',
+                color: '#fff'
+              }}
               value={adDate}
               onChange={e=>setAdDate(e.target.value)}
             />
-            <span className="absolute right-3 top-8 text-white pointer-events-none">
-              📅
-            </span>
           </div>
           <div>
             <label className="block mb-1">Ad Theme ⓘ</label>
