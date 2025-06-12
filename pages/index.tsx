@@ -1,8 +1,8 @@
 // pages/index.tsx
+
 import { useState, useEffect } from 'react'
 import sanitizeText from '../utils/sanitizeText'
 import formatToDDMMYY from '../utils/formatToDDMMYY'
-import copy from 'copy-to-clipboard'
 
 const platformOptions = [
   { label: 'Facebook', value: 'facebook' },
@@ -131,64 +131,60 @@ const languages = [
 export default function Home() {
   // inputs
   const [platform, setPlatform] = useState<string>('')
-  const [product, setProduct] = useState('')
-  const [campType, setCampType] = useState('')
-  const [campDate, setCampDate] = useState('')
-  const [campTheme, setCampTheme] = useState('')
+  const [product, setProduct] = useState<string>('')
+  const [campType, setCampType] = useState<string>('')
+  const [campDate, setCampDate] = useState<string>('')
+  const [campTheme, setCampTheme] = useState<string>('')
 
-  const [adsetTheme, setAdsetTheme] = useState('')
-  const [targeting, setTargeting] = useState('')
+  const [adsetTheme, setAdsetTheme] = useState<string>('')
+  const [targeting, setTargeting] = useState<string>('')
   const [countries, setCountries] = useState<string[]>(['All'])
-  const [stateZip, setStateZip] = useState('')
-  const [ageMin, setAgeMin] = useState('')
-  const [ageMax, setAgeMax] = useState('')
-  const [gender, setGender] = useState('')
-  const [language, setLanguage] = useState('')
-  const [matchType, setMatchType] = useState('')
-  const [adsetDate, setAdsetDate] = useState('')
+  const [stateZip, setStateZip] = useState<string>('')
+  const [ageMin, setAgeMin] = useState<string>('')
+  const [ageMax, setAgeMax] = useState<string>('')
+  const [gender, setGender] = useState<string>('')
+  const [language, setLanguage] = useState<string>('')
+  const [matchType, setMatchType] = useState<string>('')
+  const [adsetDate, setAdsetDate] = useState<string>('')
 
-  const [adType, setAdType] = useState('')
-  const [adDate, setAdDate] = useState('')
-  const [adTheme, setAdTheme] = useState('')
+  const [adType, setAdType] = useState<string>('')
+  const [adDate, setAdDate] = useState<string>('')
+  const [adTheme, setAdTheme] = useState<string>('')
 
   // outputs
-  const [campaignName, setCampaignName] = useState('na_na_na')
-  const [adSetName, setAdSetName] = useState('na')
-  const [adName, setAdName] = useState('na')
-  const [utmString, setUtmString] = useState('No UTM generated yet.')
-  const [finalUrl, setFinalUrl] = useState('')
+  const [campaignName, setCampaignName] = useState<string>('na_na_na_na')
+  const [adSetName, setAdSetName] = useState<string>('na')
+  const [adName, setAdName] = useState<string>('na')
+  const [utmString, setUtmString] = useState<string>('No UTM generated yet.')
+  const [finalUrl, setFinalUrl] = useState<string>('')
 
-  // utility to sanitize + default
-  const seg = (v: string) =>
-    (sanitizeText(v) || 'na').replace(/\s+/g, '+')
+  // helper to sanitize
+  const seg = (v: string) => (sanitizeText(v) || 'na').replace(/\s+/g, '+')
 
   useEffect(() => {
-    // campaign name = product, type, theme, date
+    // Build Campaign Name
     const pr = seg(product)
     const tp = campType || 'na'
     const dt = campDate ? formatToDDMMYY(campDate) : 'na'
     const th = campTheme ? seg(campTheme) : 'na'
     setCampaignName(`${pr}_${tp}_${dt}_${th}`)
 
-    // adset name = product, type, countries, stateZip, age, gender, language, match, date, theme
-    const ct = targeting || 'na'
-    const cs = countries.length ? countries.map(c=> seg(c)).join('-') : 'na'
+    // Build Ad Set Name
+    const cs = countries.length ? countries.map(seg).join('-') : 'na'
     const sz = stateZip ? seg(stateZip) : 'na'
     const ag = `${ageMin||'na'}-${ageMax||'na'}`
-    const gd = gender||'na'
-    const lg = language||'na'
-    const mt = matchType||'na'
-    const adDateSeg = adsetDate ? formatToDDMMYY(adsetDate) : 'na'
+    const gd = gender || 'na'
+    const lg = language || 'na'
+    const mt = matchType || 'na'
+    const asDt = adsetDate ? formatToDDMMYY(adsetDate) : 'na'
     const asTh = adsetTheme ? seg(adsetTheme) : 'na'
-    setAdSetName([
-      pr,tp,cs,sz,ag,gd,lg,mt,adDateSeg,asTh
-    ].join('_'))
+    setAdSetName([pr,tp,cs,sz,ag,gd,lg,mt,asDt,asTh].join('_'))
 
-    // ad name = product, type, adType, date, theme
-    const at = adType||'na'
+    // Build Ad Name
+    const at = adType || 'na'
     const adDt = adDate ? formatToDDMMYY(adDate) : 'na'
-    const adTh = adTheme ? seg(adTheme) : 'na'
-    setAdName(`${pr}_${tp}_${at}_${adDt}_${adTh}`)
+    const adThSeg = adTheme ? seg(adTheme) : 'na'
+    setAdName(`${pr}_${tp}_${at}_${adDt}_${adThSeg}`)
   }, [
     product, campType, campDate, campTheme,
     targeting, countries, stateZip, ageMin, ageMax,
@@ -196,12 +192,9 @@ export default function Home() {
     adType, adDate, adTheme
   ])
 
-  // UTM Generator
-  function generateUTM() {
-    if (!platform) {
-      alert('Please choose Platform')
-      return
-    }
+  // UTM generator
+  const generateUTM = () => {
+    if (!platform) return alert('Please choose Platform')
     let utm = ''
     switch(platform) {
       case 'facebook':
@@ -224,31 +217,35 @@ export default function Home() {
   }
 
   // Final URL
-  function generateURL() {
+  const generateURL = () => {
     const inp = document.getElementById('landing-page') as HTMLInputElement
-    if (!inp.value) {
-      alert('Please enter Landing Page URL')
-      return
-    }
+    if (!inp.value) return alert('Please enter Landing Page URL')
     const sep = inp.value.includes('?') ? '&' : '?'
     setFinalUrl(`${inp.value}${sep}${utmString}`)
   }
 
+  // copy helper
+  const doCopy = (text: string) => {
+    navigator.clipboard.writeText(text)
+  }
+
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-200 p-8">
+    <div className="min-h-screen bg-gray-900 p-8 text-gray-200">
       <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-8">
-        {/* LEFT: INPUT CARDS */}
+        {/* Left column */}
         <div className="space-y-8">
-          {/* Campaign Name */}
+          {/* Campaign config */}
           <div className="bg-gray-800 p-6 rounded-lg space-y-4">
             <h2 className="text-green-500 text-xl font-semibold">Campaign Name</h2>
-            {/* Platform */}
             <label className="block">
               <span className="text-sm">Platform ⓘ</span>
               <select
-                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2"
+                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
                 value={platform}
-                onChange={(e)=>{ setPlatform(e.target.value); setCampType('') }}
+                onChange={e=>{
+                  setPlatform(e.target.value)
+                  setCampType('')
+                }}
               >
                 <option value="">Select platform</option>
                 {platformOptions.map(p=>(
@@ -256,50 +253,43 @@ export default function Home() {
                 ))}
               </select>
             </label>
-            {/* Product */}
             <label className="block">
               <span className="text-sm">Product ⓘ</span>
               <input
-                type="text"
-                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2"
+                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
                 placeholder="Enter product"
                 value={product}
                 onChange={e=>setProduct(e.target.value)}
               />
             </label>
-            {/* Campaign Type */}
             <label className="block">
               <span className="text-sm">Campaign Type ⓘ</span>
               <select
-                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2"
                 disabled={!platform}
+                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
                 value={campType}
                 onChange={e=>setCampType(e.target.value)}
               >
-                <option value="">{ platform ? 'Select type' : 'Select platform first'}</option>
-                {platform && campaignTypesByPlatform[platform]?.map(ct=>(
+                <option value="">{platform ? 'Select type' : 'Select platform first'}</option>
+                {platform && campaignTypesByPlatform[platform].map(ct=>(
                   <option key={ct.value} value={ct.value}>{ct.label}</option>
                 ))}
               </select>
             </label>
-            {/* Campaign Date */}
             <label className="block relative">
               <span className="text-sm">Campaign Date (optional) ⓘ</span>
               <input
                 type="date"
-                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 pr-10"
-                placeholder="dd/mm/yyyy"
+                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 pr-10"
                 value={campDate}
                 onChange={e=>setCampDate(e.target.value)}
               />
-              <svg className="w-5 h-5 absolute right-3 bottom-3 text-white pointer-events-none" fill="currentColor" viewBox="0 0 20 20"><path d="M..." /></svg>
+              <svg className="absolute right-3 bottom-3 w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M..." /></svg>
             </label>
-            {/* Campaign Theme */}
             <label className="block">
               <span className="text-sm">Campaign Theme (optional) ⓘ</span>
               <input
-                type="text"
-                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2"
+                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
                 placeholder="Enter theme"
                 value={campTheme}
                 onChange={e=>setCampTheme(e.target.value)}
@@ -307,25 +297,22 @@ export default function Home() {
             </label>
           </div>
 
-          {/* Ad Set Name */}
+          {/* Ad Set config */}
           <div className="bg-gray-800 p-6 rounded-lg space-y-4">
             <h2 className="text-green-500 text-xl font-semibold">Ad Set Name</h2>
-
             <label className="block">
               <span className="text-sm">Ad Set Theme (optional) ⓘ</span>
               <input
-                type="text"
-                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2"
+                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
                 placeholder="Enter ad set theme"
                 value={adsetTheme}
                 onChange={e=>setAdsetTheme(e.target.value)}
               />
             </label>
-
             <label className="block">
               <span className="text-sm">Targeting type ⓘ</span>
               <select
-                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2"
+                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
                 value={targeting}
                 onChange={e=>setTargeting(e.target.value)}
               >
@@ -335,13 +322,12 @@ export default function Home() {
                 <option value="wide">Wide</option>
               </select>
             </label>
-
             <label className="block">
               <span className="text-sm">Countries ⓘ</span>
               <select
                 multiple
                 size={7}
-                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2"
+                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
                 value={countries}
                 onChange={e=>{
                   const opts = Array.from(e.target.selectedOptions).map(o=>o.value)
@@ -353,55 +339,47 @@ export default function Home() {
                 ))}
               </select>
             </label>
-
             <label className="block">
               <span className="text-sm">State/City/Zip(s) (optional) ⓘ</span>
               <input
-                type="text"
-                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2"
+                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
                 placeholder="e.g. CA-LosAngeles-90001"
                 value={stateZip}
                 onChange={e=>setStateZip(e.target.value)}
               />
             </label>
-
-            {/* Age */}
-            <div className="flex space-x-4">
-              <div className="w-1/2">
-                <label className="block"><span className="text-sm">Age ⓘ</span></label>
-                <select
-                  className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2"
-                  value={ageMin}
-                  onChange={e=>setAgeMin(e.target.value)}
-                >
-                  <option value="">Min</option>
-                  {[...Array(48).keys()].map(n=>(
-                    <option key={n} value={`${n+18}`}>{n+18}</option>
-                  ))}
-                </select>
+            {/* Age / Gender / Language row */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <span className="text-sm">Age ⓘ</span>
+                <div className="flex space-x-2 mt-1">
+                  <select
+                    className="w-1/2 bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                    value={ageMin}
+                    onChange={e=>setAgeMin(e.target.value)}
+                  >
+                    <option value="">Min</option>
+                    {[...Array(48).keys()].map(n=>
+                      <option key={n} value={`${n+18}`}>{n+18}</option>
+                    )}
+                  </select>
+                  <select
+                    className="w-1/2 bg-gray-700 border border-gray-600 rounded px-3 py-2"
+                    value={ageMax}
+                    onChange={e=>setAgeMax(e.target.value)}
+                  >
+                    <option value="">Max</option>
+                    {[...Array(47).keys()].map(n=>
+                      <option key={n} value={`${n+18}`}>{n+18}</option>
+                    )}
+                    <option value="65+">65+</option>
+                  </select>
+                </div>
               </div>
-              <div className="w-1/2">
-                <label className="block"><span className="text-sm">&nbsp;</span></label>
+              <div>
+                <span className="text-sm">Gender ⓘ</span>
                 <select
-                  className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2"
-                  value={ageMax}
-                  onChange={e=>setAgeMax(e.target.value)}
-                >
-                  <option value="">Max</option>
-                  {[...Array(47).keys()].map(n=>(
-                    <option key={n} value={`${n+18}`}>{n+18}</option>
-                  ))}
-                  <option value="65+">65+</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Gender + Language */}
-            <div className="flex space-x-4 mt-4">
-              <div className="w-1/2">
-                <label className="block"><span className="text-sm">Gender ⓘ</span></label>
-                <select
-                  className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2"
+                  className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
                   value={gender}
                   onChange={e=>setGender(e.target.value)}
                 >
@@ -411,10 +389,10 @@ export default function Home() {
                   ))}
                 </select>
               </div>
-              <div className="w-1/2">
-                <label className="block"><span className="text-sm">Language ⓘ</span></label>
+              <div>
+                <span className="text-sm">Language ⓘ</span>
                 <select
-                  className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2"
+                  className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
                   value={language}
                   onChange={e=>setLanguage(e.target.value)}
                 >
@@ -425,11 +403,10 @@ export default function Home() {
                 </select>
               </div>
             </div>
-
             <label className="block mt-4">
               <span className="text-sm">Match Type (optional) ⓘ</span>
               <select
-                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2"
+                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
                 value={matchType}
                 onChange={e=>setMatchType(e.target.value)}
               >
@@ -440,50 +417,48 @@ export default function Home() {
                 <option value="broad">broad</option>
               </select>
             </label>
-
             <label className="block relative mt-4">
               <span className="text-sm">Ad Set Date (optional) ⓘ</span>
               <input
                 type="date"
-                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 pr-10"
+                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 pr-10"
                 value={adsetDate}
                 onChange={e=>setAdsetDate(e.target.value)}
               />
-              <svg className="w-5 h-5 absolute right-3 bottom-3 text-white"><path d="M..."/></svg>
+              <svg className="absolute right-3 bottom-3 w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M..." /></svg>
             </label>
           </div>
 
-          {/* Ad Name */}
+          {/* Ad config */}
           <div className="bg-gray-800 p-6 rounded-lg space-y-4">
             <h2 className="text-green-500 text-xl font-semibold">Ad Name</h2>
             <label className="block">
               <span className="text-sm">Ad Type ⓘ</span>
               <select
-                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2"
+                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
                 value={adType}
                 onChange={e=>setAdType(e.target.value)}
               >
                 <option value="">Select ad type</option>
-                {platform && adTypesByPlatform[platform]?.map(a=>(
+                {platform && adTypesByPlatform[platform].map(a=>(
                   <option key={a.value} value={a.value}>{a.label}</option>
                 ))}
               </select>
             </label>
-            <label className="block">
+            <label className="block relative">
               <span className="text-sm">Ad Date (optional) ⓘ</span>
               <input
                 type="date"
-                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 pr-10"
+                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 pr-10"
                 value={adDate}
                 onChange={e=>setAdDate(e.target.value)}
               />
-              <svg className="w-5 h-5 absolute right-3 bottom-3 text-white"><path d="M..."/></svg>
+              <svg className="absolute right-3 bottom-3 w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M..." /></svg>
             </label>
             <label className="block">
               <span className="text-sm">Ad Theme (optional) ⓘ</span>
               <input
-                type="text"
-                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2"
+                className="mt-1 w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
                 placeholder="Enter ad theme"
                 value={adTheme}
                 onChange={e=>setAdTheme(e.target.value)}
@@ -492,35 +467,27 @@ export default function Home() {
           </div>
         </div>
 
-        {/* RIGHT: OUTPUT CARDS */}
+        {/* Right column */}
         <div className="space-y-8">
           {/* Final Result */}
           <div className="bg-gray-800 p-6 rounded-lg space-y-4">
             <h2 className="text-green-500 text-xl font-semibold">Final Result</h2>
-            <div className="flex justify-between items-center">
-              <span>Campaign Name</span>
-              <button
-                className="text-sm text-green-400 hover:text-green-200"
-                onClick={()=>{ copy(campaignName) }}
-              >Copy</button>
+
+            <div className="flex justify-between">
+              <span className="font-medium">Campaign Name</span>
+              <button className="text-sm text-green-400" onClick={()=>doCopy(campaignName)}>Copy</button>
             </div>
             <div className="break-all">{campaignName}</div>
 
-            <div className="flex justify-between items-center mt-2">
-              <span>Ad Set Name</span>
-              <button
-                className="text-sm text-green-400 hover:text-green-200"
-                onClick={()=>{ copy(adSetName) }}
-              >Copy</button>
+            <div className="flex justify-between mt-2">
+              <span className="font-medium">Ad Set Name</span>
+              <button className="text-sm text-green-400" onClick={()=>doCopy(adSetName)}>Copy</button>
             </div>
             <div className="break-all">{adSetName}</div>
 
-            <div className="flex justify-between items-center mt-2">
-              <span>Ad Name</span>
-              <button
-                className="text-sm text-green-400 hover:text-green-200"
-                onClick={()=>{ copy(adName) }}
-              >Copy</button>
+            <div className="flex justify-between mt-2">
+              <span className="font-medium">Ad Name</span>
+              <button className="text-sm text-green-400" onClick={()=>doCopy(adName)}>Copy</button>
             </div>
             <div className="break-all">{adName}</div>
           </div>
@@ -529,19 +496,13 @@ export default function Home() {
           <div className="bg-gray-800 p-6 rounded-lg space-y-4">
             <h2 className="text-green-500 text-xl font-semibold">UTM Generator</h2>
             <textarea
-              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 h-24"
+              className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 h-24"
               readOnly
               value={utmString}
             />
             <div className="flex space-x-4">
-              <button
-                className="bg-green-500 px-4 py-2 rounded-md text-sm"
-                onClick={generateUTM}
-              >Generate</button>
-              <button
-                className="bg-gray-600 px-4 py-2 rounded-md text-sm"
-                onClick={()=>{ copy(utmString) }}
-              >Copy</button>
+              <button className="bg-green-500 px-4 py-2 rounded text-sm" onClick={generateUTM}>Generate</button>
+              <button className="bg-gray-600 px-4 py-2 rounded text-sm" onClick={()=>doCopy(utmString)}>Copy</button>
             </div>
           </div>
 
@@ -550,25 +511,18 @@ export default function Home() {
             <h2 className="text-green-500 text-xl font-semibold">Landing Page URL</h2>
             <input
               id="landing-page"
-              type="url"
-              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2"
+              className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
               placeholder="https://www.cnn.com/"
             />
             <textarea
-              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 h-24"
+              className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 h-24"
               readOnly
               placeholder="URL + UTM"
               value={finalUrl}
             />
             <div className="flex space-x-4">
-              <button
-                className="bg-green-500 px-4 py-2 rounded-md text-sm"
-                onClick={generateURL}
-              >Generate</button>
-              <button
-                className="bg-gray-600 px-4 py-2 rounded-md text-sm"
-                onClick={()=>{ copy(finalUrl) }}
-              >Copy</button>
+              <button className="bg-green-500 px-4 py-2 rounded text-sm" onClick={generateURL}>Generate</button>
+              <button className="bg-gray-600 px-4 py-2 rounded text-sm" onClick={()=>doCopy(finalUrl)}>Copy</button>
             </div>
           </div>
         </div>
