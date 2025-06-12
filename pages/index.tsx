@@ -1,10 +1,8 @@
-// pages/index.tsx
+import { useState, useEffect } from 'react'
+import sanitizeText from '../utils/sanitizeText'
+import formatToDDMMYY from '../utils/formatToDDMMYY'
 
-import { useState, useEffect } from 'react';
-import sanitizeText from '../utils/sanitizeText';
-import formatToDDMMYY from '../utils/formatToDDMMYY';
-
-const CAMPAIGN_TYPES: Record<string, { label: string; value: string }[]> = {
+const campaignTypesByPlatform: Record<string, { label: string; value: string }[]> = {
   Facebook: [
     { label: 'Conversions', value: 'conv' },
     { label: 'Lead Generation', value: 'lg' },
@@ -17,330 +15,608 @@ const CAMPAIGN_TYPES: Record<string, { label: string; value: string }[]> = {
     { label: 'Boost', value: 'bst' },
   ],
   'Google Ads': [
-    { label: 'Conversions', value: 'conv' },
-    { label: 'Lead Generation', value: 'lg' },
-    { label: 'Awareness', value: 'awr' },
-    { label: 'Traffic', value: 'trfc' },
-    { label: 'Video Views', value: 'vv' },
+    { label: 'Search', value: 'srch' },
+    { label: 'Display / GDN', value: 'gdn' },
+    { label: 'Discovery', value: 'disc' },
+    { label: 'Performance Max', value: 'pmax' },
+    { label: 'YouTube (video)', value: 'yt' },
   ],
   'Microsoft Ads': [
-    { label: 'Conversions', value: 'conv' },
-    { label: 'Lead Generation', value: 'lg' },
-    { label: 'Traffic', value: 'trfc' },
+    { label: 'Search', value: 'srch' },
+    { label: 'Audience Ads / MAN', value: 'man' },
+    { label: 'Smart Search Campaign', value: 'smrt' },
   ],
   TikTok: [
     { label: 'Conversions', value: 'conv' },
+    { label: 'Lead Generation', value: 'lg' },
     { label: 'Reach', value: 'reach' },
-    { label: 'Engagement', value: 'eng' },
+    { label: 'Traffic', value: 'trfc' },
+    { label: 'Video Views', value: 'vv' },
   ],
   LinkedIn: [
+    { label: 'Conversions', value: 'conv' },
     { label: 'Lead Generation', value: 'lg' },
-    { label: 'Traffic', value: 'trfc' },
     { label: 'Brand Awareness', value: 'awr' },
+    { label: 'Website Visits (Traffic)', value: 'trfc' },
+    { label: 'Engagement', value: 'eng' },
+    { label: 'Video Views', value: 'vv' },
   ],
-};
+}
 
-const AD_TYPES: Record<string, { label: string; value: string }[]> = {
+const adTypesByPlatform: Record<string, { label: string; value: string }[]> = {
   Facebook: [
     { label: 'Image', value: 'img' },
     { label: 'Video', value: 'vid' },
     { label: 'Carousel', value: 'crsel' },
-    { label: 'Dynamic Creative (DCO)', value: 'dyn' },
+    { label: 'Dynamic Creative Ad (DCO)', value: 'dyn' },
     { label: 'GIF', value: 'gif' },
   ],
   'Google Ads': [
-    { label: 'Image', value: 'img' },
-    { label: 'Video', value: 'vid' },
-    { label: 'Carousel', value: 'crsel' },
+    { label: 'Responsive Search Ad', value: 'rsa' },
+    { label: 'Call Ad', value: 'call' },
+    { label: 'Dynamic Search Ad', value: 'dsa' },
+    { label: 'Video Ad', value: 'vid' },
+    { label: 'Responsive Display Ad', value: 'rda' },
+    { label: 'Discovery Carousel Ad', value: 'dca' },
+    { label: 'Discovery Ad', value: 'disco' },
+    { label: 'Bumper Ads (6s)', value: 'bmp' },
+    { label: 'Skippable In-Stream Ads', value: 'skr' },
+    { label: 'Non-skippable In-Stream Ads', value: 'nsk' },
+    { label: 'TrueView Ads', value: 'tvw' },
+    { label: 'Shorts Ads', value: 'shr' },
   ],
   'Microsoft Ads': [
-    { label: 'Image', value: 'img' },
-    { label: 'Video', value: 'vid' },
-    { label: 'Carousel', value: 'crsel' },
+    { label: 'Expanded Text Ad', value: 'xta' },
+    { label: 'Responsive Search Ads', value: 'rsa' },
+    { label: 'Dynamic Search Ads', value: 'dsa' },
+    { label: 'Bing Smart Search Ads', value: 'bss' },
+    { label: 'Audience Ads', value: 'aud' },
+    { label: 'Multimedia Ads', value: 'mmd' },
   ],
   TikTok: [
     { label: 'Image', value: 'img' },
     { label: 'Video', value: 'vid' },
+    { label: 'Spark Ads', value: 'spk' },
+    { label: 'Carousel Ads', value: 'car' },
   ],
   LinkedIn: [
     { label: 'Image', value: 'img' },
     { label: 'Video', value: 'vid' },
+    { label: 'Carousel', value: 'car' },
     { label: 'Text', value: 'txt' },
+    { label: 'Conversation', value: 'con' },
+    { label: 'Spotlight', value: 'spt' },
+    { label: 'Message', value: 'msg' },
   ],
-};
+}
+
+const countryOptions = [
+  { label: 'All', value: 'all' },
+  { label: 'United States', value: 'us' },
+  { label: 'Israel', value: 'il' },
+  { label: 'Austria', value: 'at' },
+  { label: 'Belgium', value: 'be' },
+  { label: 'Bulgaria', value: 'bg' },
+  { label: 'Croatia', value: 'hr' },
+  { label: 'Cyprus', value: 'cy' },
+  { label: 'Czechia', value: 'cz' },
+  { label: 'Denmark', value: 'dk' },
+  { label: 'Estonia', value: 'ee' },
+  { label: 'Finland', value: 'fi' },
+  { label: 'France', value: 'fr' },
+  { label: 'Germany', value: 'de' },
+  { label: 'Greece', value: 'el' },
+  { label: 'Hungary', value: 'hu' },
+  { label: 'Ireland', value: 'ie' },
+  { label: 'Italy', value: 'it' },
+  { label: 'Latvia', value: 'lv' },
+  { label: 'Lithuania', value: 'lt' },
+  { label: 'Luxembourg', value: 'lu' },
+  { label: 'Malta', value: 'mt' },
+  { label: 'Netherlands', value: 'nl' },
+  { label: 'Poland', value: 'pl' },
+  { label: 'Portugal', value: 'pt' },
+  { label: 'Romania', value: 'ro' },
+  { label: 'Slovakia', value: 'sk' },
+  { label: 'Slovenia', value: 'si' },
+  { label: 'Spain', value: 'es' },
+  { label: 'Sweden', value: 'se' },
+]
 
 export default function Home() {
-  // -------- Input States --------
-  const [platform, setPlatform] = useState('');
-  const [product, setProduct] = useState('');
-  const [campType, setCampType] = useState('');
-  const [campTheme, setCampTheme] = useState('');
-  const [campDate, setCampDate] = useState('');
+  // Inputs
+  const [platform, setPlatform] = useState('')
+  const [product, setProduct] = useState('')
+  const [campType, setCampType] = useState('')
+  const [campTheme, setCampTheme] = useState('')
+  const [campDate, setCampDate] = useState('')
 
-  const [adSetTheme, setAdSetTheme] = useState('');
-  const [targetingType, setTargetingType] = useState('');
-  const [countries, setCountries] = useState('');
-  const [stateZip, setStateZip] = useState('');
-  const [ageMin, setAgeMin] = useState('');
-  const [ageMax, setAgeMax] = useState('');
-  const [gender, setGender] = useState('');
-  const [language, setLanguage] = useState('');
-  const [matchType, setMatchType] = useState('');
-  const [adsetDate, setAdsetDate] = useState('');
+  const [adSetTheme, setAdSetTheme] = useState('')
+  const [targeting, setTargeting] = useState('')
+  const [countries, setCountries] = useState<string[]>([])
+  const [stateZip, setStateZip] = useState('')
+  const [ageMin, setAgeMin] = useState('')
+  const [ageMax, setAgeMax] = useState('')
+  const [gender, setGender] = useState('')
+  const [language, setLanguage] = useState('')
+  const [matchType, setMatchType] = useState('')
+  const [adsetDate, setAdsetDate] = useState('')
 
-  const [adType, setAdType] = useState('');
-  const [adTheme, setAdTheme] = useState('');
-  const [adDate, setAdDate] = useState('');
+  const [adType, setAdType] = useState('')
+  const [adTheme, setAdTheme] = useState('')
+  const [adDate, setAdDate] = useState('')
 
-  // -------- Output States --------
-  const [campaignName, setCampaignName] = useState('na_na_na');
-  const [adSetName, setAdSetName]       = useState('na');
-  const [adName, setAdName]             = useState('na');
-  const [utmString, setUtmString]       = useState('');
-  const [finalUrl, setFinalUrl]         = useState('');
+  // Outputs
+  const [campaignName, setCampaignName] = useState('na_na_na')
+  const [adSetName, setAdSetName] = useState('na')
+  const [adName, setAdName] = useState('na')
+  const [utmString, setUtmString] = useState('')
+  const [finalUrl, setFinalUrl] = useState('')
 
-  // -------- Real-time Generation --------
+  // Real-time name generation
   useEffect(() => {
-    const seg = (v: string) => (sanitizeText(v) || 'na').replace(/\s+/g, '+');
-    const prod = seg(product);
-    const type = campType || 'na';
-    const theme = campTheme ? seg(campTheme) : 'na';
+    const seg = (val: string) =>
+      (sanitizeText(val) || 'na').replace(/\s+/g, '+')
 
-    // Campaign
-    setCampaignName(`${prod}_${type}_${theme}`);
+    const prodSeg = seg(product)
+    const typeSeg = campType || 'na'
+    const themeSeg = campTheme ? seg(campTheme) : 'na'
 
-    // Ad Set
-    const tgt = targetingType || 'na';
-    const ctr = countries || 'na';
-    const sz  = stateZip ? seg(stateZip) : 'na';
-    const age = `${ageMin || 'na'}-${ageMax || 'na'}`;
-    const gen = gender || 'na';
-    const lang= language || 'na';
-    const mt  = matchType || 'na';
-    const asd = adsetDate ? formatToDDMMYY(adsetDate) : 'na';
-    const ast = adSetTheme ? seg(adSetTheme) : 'na';
+    // Campaign Name
+    setCampaignName(`${prodSeg}_${typeSeg}_${themeSeg}`)
+
+    // Ad Set Name
+    const countrySeg = countries.length ? countries.join('-') : 'na'
+    const stateSeg = stateZip ? seg(stateZip) : 'na'
+    const ageSeg = `${ageMin || 'na'}-${ageMax || 'na'}`
+    const genderSeg = gender || 'na'
+    const langSeg = language || 'na'
+    const matchSeg = matchType || 'na'
+    const adsetDateSeg = adsetDate ? formatToDDMMYY(adsetDate) : 'na'
+    const adsetThemeSeg = adSetTheme ? seg(adSetTheme) : 'na'
+
     setAdSetName(
-      `${prod}_${type}_${tgt}_${ctr}_${sz}_${age}_${gen}_${lang}_${mt}_${asd}_${ast}`
-    );
+      [
+        prodSeg,
+        typeSeg,
+        countrySeg,
+        stateSeg,
+        ageSeg,
+        genderSeg,
+        langSeg,
+        matchSeg,
+        adsetDateSeg,
+        adsetThemeSeg,
+      ].join('_')
+    )
 
-    // Ad
-    const at  = adType || 'na';
-    const adt = adDate ? formatToDDMMYY(adDate) : 'na';
-    const adh = adTheme ? seg(adTheme) : 'na';
-    setAdName(`${prod}_${type}_${theme}_${at}_${adt}_${adh}`);
+    // Ad Name
+    const adTypeSeg = adType || 'na'
+    const adDateSeg = adDate ? formatToDDMMYY(adDate) : 'na'
+    const adThemeSeg = adTheme ? seg(adTheme) : 'na'
+
+    setAdName(
+      [prodSeg, typeSeg, adTypeSeg, adDateSeg, adThemeSeg].join('_')
+    )
   }, [
-    product, campType, campTheme, campDate,
-    adSetTheme, targetingType, countries, stateZip,
-    ageMin, ageMax, gender, language, matchType, adsetDate,
-    adType, adTheme, adDate
-  ]);
+    product,
+    campType,
+    campTheme,
+    adSetTheme,
+    targeting,
+    countries,
+    stateZip,
+    ageMin,
+    ageMax,
+    gender,
+    language,
+    matchType,
+    adsetDate,
+    adType,
+    adTheme,
+    adDate,
+  ])
 
-  // -------- UTM Generation --------
-  function generateUTM() {
+  // UTM Generation
+  const generateUTM = () => {
     if (!platform) {
-      const notif = document.createElement('div');
-      notif.innerText = 'Please Choose Platform';
-      notif.className = 'fixed top-4 right-4 bg-gray-800 text-white px-4 py-2 rounded';
-      document.body.appendChild(notif);
-      setTimeout(() => document.body.removeChild(notif), 3000);
-      return;
+      // toast notification
+      return
     }
-    let utm = '';
+    let utm = ''
     switch (platform) {
       case 'Facebook':
-        utm = `utm_source=facebook&utm_medium=paid&utm_campaign={{campaign.name}}&utm_adset={{adset.name}}&utm_ad={{ad.name}}&cid={{campaign.id}}&asid={{adset.id}}&aid={{ad.id}}&fsource={{site_source_name}}&placement={{placement}}`;
-        break;
+        utm =
+          'utm_source=facebook&utm_medium=paid&utm_campaign={{campaign.name}}' +
+          '&utm_adset={{adset.name}}&utm_ad={{ad.name}}' +
+          '&cid={{campaign.id}}&asid={{adset.id}}&aid={{ad.id}}' +
+          '&fsource={{site_source_name}}&placement={{placement}}'
+        break
       case 'Google Ads':
-        utm = `{lpurl}?utm_source=google&utm_medium=cpc&utm_campaign={_campaign}&utm_adset={_adset}&utm_ad={_ad}&utm_term={keyword}&adpos={adposition}&device={device}&creative={creative}&placement={placement}&cid={campaignid}&asid={adgroupid}&kmt={matchtype}&net={network}&device_model={devicemodel}&target={targetid}`;
-        break;
+        utm =
+          '{lpurl}?utm_source=google&utm_medium=cpc' +
+          '&utm_campaign={{campaign.name}}&utm_adset={{adset.name}}' +
+          '&utm_ad={{ad.name}}&utm_term={keyword}&adpos={adposition}' +
+          '&device={device}&creative={creative}&placement={placement}' +
+          '&cid={campaignid}&asid={adgroupid}' +
+          '&kmt={matchtype}&net={network}&device_model={devicemodel}' +
+          '&target={targetid}'
+        break
       case 'Microsoft Ads':
-        utm = `{lpurl}?utm_source=bing&utm_medium=cpc&cid={CampaignId}&utm_campaign={Campaign}&asid={AdGroupId}&utm_adset={AdGroup}&aid={AdId}&kmt={MatchType}&utm_term={keyword:default}-{QueryString}&target={TargetId}&net={Network}&device={Device}`;
-        break;
+        utm =
+          '{lpurl}?utm_source=bing&utm_medium=cpc' +
+          '&cid={CampaignId}&utm_campaign={Campaign}' +
+          '&asid={AdGroupId}&utm_adset={AdGroup}' +
+          '&aid={AdId}&kmt={MatchType}' +
+          '&utm_term={keyword:default}-{QueryString}' +
+          '&target={TargetId}&net={Network}&device={Device}'
+        break
       case 'TikTok':
-        utm = `utm_source=tiktok&utm_medium=paid&utm_campaign=__CAMPAIGN_NAME__&utm_adset=__AID_NAME__&utm_ad=__CID_NAME__&cid=__CAMPAIGN_ID__&asid=__AID__&aid=__CID__&placement=__PLACEMENT__&ttclid=__CLICKID__`;
-        break;
+        utm =
+          'utm_source=tiktok&utm_medium=paid' +
+          '&utm_campaign=__CAMPAIGN_NAME__&utm_adset=__AID_NAME__' +
+          '&utm_ad=__CID_NAME__&cid=__CAMPAIGN_ID__' +
+          '&asid=__AID__&aid=__CID__' +
+          '&placement=__PLACEMENT__&ttclid=__CLICKID__'
+        break
       case 'LinkedIn':
-        utm = `utm_source=linkedin&utm_medium=paid_social&utm_campaign={{campaign.name}}&utm_content={{ad.name}}`;
-        break;
+        utm =
+          'utm_source=linkedin&utm_medium=paid_social' +
+          '&utm_campaign={{campaign.name}}&utm_content={{ad.name}}' +
+          '&account_id={{ACCOUNT_ID}}' +
+          '&account_name={{ACCOUNT_NAME}}' +
+          '&campaign_id={{CAMPAIGN_ID}}' +
+          '&campaign_group_id={{CAMPAIGN_GROUP_ID}}' +
+          '&creative_id={{CREATIVE_ID}}'
+        break
     }
-    setUtmString(utm);
+    setUtmString(utm)
   }
 
-  // -------- Final URL Generation --------
-  function generateURL() {
-    const inp = document.getElementById('landing-page') as HTMLInputElement;
-    if (!inp.value) return alert('Please enter Landing Page URL');
-    const sep = inp.value.includes('?') ? '&' : '?';
-    setFinalUrl(`${inp.value}${sep}${utmString}`);
+  // Final URL Generation
+  const generateURL = () => {
+    const lp = (document.getElementById(
+      'landing-page'
+    ) as HTMLInputElement).value
+    const sep = lp.includes('?') ? '&' : '?'
+    setFinalUrl(lp + sep + utmString)
   }
 
-  // -------- Render --------
   return (
-    <div className="min-h-screen grid grid-cols-2 gap-8 p-8 bg-gray-900 text-gray-100">
-      {/* LEFT COLUMN */}
-      <div className="space-y-10">
+    <div className="container mx-auto p-6 grid grid-cols-2 gap-8">
+      {/* Left column */}
+      <div className="space-y-6">
         {/* Campaign Name */}
-        <div className="bg-gray-800 p-6 rounded-lg">
-          <h2 className="text-green-400 text-lg font-semibold">Campaign Name</h2>
-          <label className="block mt-4">Platform ⓘ</label>
-          <select value={platform} onChange={e => setPlatform(e.target.value)}
-            className="mt-1 w-full bg-gray-700 border border-gray-600 rounded p-2">
-            <option value="">Select Platform</option>
-            {Object.keys(CAMPAIGN_TYPES).map(p => (
+        <div className="card">
+          <h3 className="text-green-500 mb-4">Campaign Name</h3>
+          <label className="block mb-1">
+            Platform <span>ⓘ</span>
+          </label>
+          <select
+            className="input"
+            value={platform}
+            onChange={e => {
+              setPlatform(e.target.value)
+              setCampType('')
+              setAdType('')
+            }}
+          >
+            <option value="">Select platform</option>
+            {Object.keys(campaignTypesByPlatform).map(p => (
               <option key={p}>{p}</option>
             ))}
           </select>
 
-          <label className="block mt-4">Product ⓘ</label>
-          <input value={product} onChange={e => setProduct(e.target.value)}
+          <label className="block mt-4 mb-1">
+            Product <span>ⓘ</span>
+          </label>
+          <input
+            className="input"
             placeholder="Enter product"
-            className="mt-1 w-full bg-gray-700 border border-gray-600 rounded p-2" />
+            value={product}
+            onChange={e => setProduct(e.target.value)}
+          />
 
-          <label className="block mt-4">Campaign Type ⓘ</label>
-          <select value={campType} onChange={e => setCampType(e.target.value)}
-            className="mt-1 w-full bg-gray-700 border border-gray-600 rounded p-2"
-            disabled={!platform}>
-            <option value="">Select type</option>
-            {(CAMPAIGN_TYPES[platform]||[]).map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
+          <label className="block mt-4 mb-1">
+            Campaign Type <span>ⓘ</span>
+          </label>
+          <select
+            className="input"
+            value={campType}
+            onChange={e => setCampType(e.target.value)}
+            disabled={!platform}
+          >
+            <option value="">
+              {platform ? 'Select type' : 'Select platform first'}
+            </option>
+            {platform &&
+              campaignTypesByPlatform[platform].map(ct => (
+                <option key={ct.value} value={ct.value}>
+                  {ct.value}
+                </option>
+              ))}
           </select>
 
-          <label className="block mt-4">Campaign Theme ⓘ (optional)</label>
-          <input value={campTheme} onChange={e => setCampTheme(e.target.value)}
+          <label className="block mt-4 mb-1">
+            Campaign Theme <span>(optional)</span> <span>ⓘ</span>
+          </label>
+          <input
+            className="input"
             placeholder="Enter theme"
-            className="mt-1 w-full bg-gray-700 border border-gray-600 rounded p-2" />
+            value={campTheme}
+            onChange={e => setCampTheme(e.target.value)}
+          />
 
-          <label className="block mt-4">Campaign Date ⓘ (optional)</label>
-          <input type="date" value={campDate} onChange={e => setCampDate(e.target.value)}
-            className="mt-1 w-full bg-gray-700 border border-gray-600 rounded p-2 pr-10" />
+          <label className="block mt-4 mb-1">
+            Campaign Date <span>(optional)</span> <span>ⓘ</span>
+          </label>
+          <input
+            type="date"
+            className="input"
+            placeholder="dd/mm/yyyy"
+            value={campDate}
+            onChange={e => setCampDate(e.target.value)}
+          />
         </div>
 
         {/* Ad Set Name */}
-        <div className="bg-gray-800 p-6 rounded-lg">
-          <h2 className="text-green-400 text-lg font-semibold">Ad Set Name</h2>
-          <label className="block mt-4">Ad Set Theme ⓘ (optional)</label>
-          <input value={adSetTheme} onChange={e => setAdSetTheme(e.target.value)}
+        <div className="card">
+          <h3 className="text-green-500 mb-4">Ad Set Name</h3>
+          <label className="block mb-1">
+            Ad Set Theme <span>(optional)</span> <span>ⓘ</span>
+          </label>
+          <input
+            className="input"
             placeholder="Enter ad set theme"
-            className="mt-1 w-full bg-gray-700 border border-gray-600 rounded p-2" />
+            value={adSetTheme}
+            onChange={e => setAdSetTheme(e.target.value)}
+          />
 
-          <label className="block mt-4">Targeting Type ⓘ</label>
-          <select value={targetingType} onChange={e => setTargetingType(e.target.value)}
-            className="mt-1 w-full bg-gray-700 border border-gray-600 rounded p-2">
-            <option value="">Select targeting</option>
-            <option value="lal">Lookalike</option>
-            <option value="rem">Remarketing</option>
-            <option value="wide">Wide</option>
+          <label className="block mt-4 mb-1">
+            Targeting Type <span>ⓘ</span>
+          </label>
+          <select
+            className="input"
+            value={targeting}
+            onChange={e => setTargeting(e.target.value)}
+          >
+            <option value="">Select type</option>
+            <option value="lal">lal</option>
+            <option value="rem">rem</option>
+            <option value="wide">wide</option>
           </select>
 
-          <label className="block mt-4">Countries ⓘ</label>
-          <input value={countries} onChange={e => setCountries(e.target.value)}
-            placeholder="e.g. us-il"
-            className="mt-1 w-full bg-gray-700 border border-gray-600 rounded p-2" />
+          <label className="block mt-4 mb-1">
+            Countries <span>ⓘ</span>
+          </label>
+          <select
+            multiple
+            className="input h-32"
+            value={countries}
+            onChange={e =>
+              setCountries(
+                Array.from(e.target.selectedOptions).map(o => o.value)
+              )
+            }
+          >
+            {countryOptions.map(c => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
 
-          <label className="block mt-4">State/City/Zip ⓘ (optional)</label>
-          <input value={stateZip} onChange={e => setStateZip(e.target.value)}
-            placeholder="Enter state/city/zip"
-            className="mt-1 w-full bg-gray-700 border border-gray-600 rounded p-2" />
+          <label className="block mt-4 mb-1">
+            State/City/Zip <span>ⓘ</span>
+          </label>
+          <input
+            className="input"
+            placeholder="Enter State/City/Zip"
+            value={stateZip}
+            onChange={e => setStateZip(e.target.value)}
+          />
 
-          <label className="block mt-4">Age Range ⓘ (optional)</label>
-          <div className="flex space-x-2">
-            <input type="number" value={ageMin} onChange={e => setAgeMin(e.target.value)}
-              placeholder="Min" min={18} max={65}
-              className="w-1/2 bg-gray-700 border border-gray-600 rounded p-2" />
-            <input type="number" value={ageMax} onChange={e => setAgeMax(e.target.value)}
-              placeholder="Max" min={18} max={65}
-              className="w-1/2 bg-gray-700 border border-gray-600 rounded p-2" />
+          {/* Age */}
+          <label className="block mt-4 mb-1">Age <span>ⓘ</span></label>
+          <div className="flex space-x-4">
+            <select
+              className="input flex-1"
+              value={ageMin}
+              onChange={e => setAgeMin(e.target.value)}
+            >
+              <option value="">Min</option>
+              {[...Array(48).keys()]
+                .map(n => 18 + n)
+                .concat(['65+'])
+                .map(v => (
+                  <option key={v}>{v}</option>
+                ))}
+            </select>
+            <select
+              className="input flex-1"
+              value={ageMax}
+              onChange={e => setAgeMax(e.target.value)}
+            >
+              <option value="">Max</option>
+              {[...Array(48).keys()]
+                .map(n => 18 + n)
+                .concat(['65+'])
+                .map(v => (
+                  <option key={v}>{v}</option>
+                ))}
+            </select>
           </div>
 
-          <label className="block mt-4">Gender ⓘ</label>
-          <select value={gender} onChange={e => setGender(e.target.value)}
-            className="mt-1 w-full bg-gray-700 border border-gray-600 rounded p-2">
-            <option value="na">all</option>
-            <option value="f">female</option>
-            <option value="m">male</option>
-          </select>
+          {/* Gender & Language */}
+          <div className="mt-4 flex space-x-4">
+            <div className="flex-1">
+              <label className="block mb-1">Gender <span>ⓘ</span></label>
+              <select
+                className="input w-full"
+                value={gender}
+                onChange={e => setGender(e.target.value)}
+              >
+                <option value="">Select gender</option>
+                <option value="all">all</option>
+                <option value="f">f</option>
+                <option value="m">m</option>
+              </select>
+            </div>
+            <div className="flex-1">
+              <label className="block mb-1">Language <span>ⓘ</span></label>
+              <select
+                className="input w-full"
+                value={language}
+                onChange={e => setLanguage(e.target.value)}
+              >
+                <option value="">Select language</option>
+                <option value="all">all</option>
+                <option value="en">en</option>
+                <option value="es">es</option>
+                <option value="ro">ro</option>
+                <option value="ar">ar</option>
+                <option value="ru">ru</option>
+                <option value="de">de</option>
+                <option value="pt">pt</option>
+              </select>
+            </div>
+          </div>
 
-          <label className="block mt-4">Language ⓘ</label>
-          <select value={language} onChange={e => setLanguage(e.target.value)}
-            className="mt-1 w-full bg-gray-700 border border-gray-600 rounded p-2">
-            <option value="na">all</option>
-            <option value="en">English</option>
-            <option value="es">Spanish</option>
-            <option value="il">Hebrew</option>
-            <option value="fr">French</option>
-            <option value="ro">Romanian</option>
-            <option value="ar">Arabic</option>
-            <option value="ru">Russian</option>
-            <option value="de">German</option>
-            <option value="pt">Portuguese</option>
-          </select>
-
-          <label className="block mt-4">Match Type ⓘ (optional)</label>
-          <select value={matchType} onChange={e => setMatchType(e.target.value)}
-            className="mt-1 w-full bg-gray-700 border border-gray-600 rounded p-2">
-            <option value="na">na</option>
+          <label className="block mt-4 mb-1">
+            Match Type <span>(optional)</span> <span>ⓘ</span>
+          </label>
+          <select
+            className="input"
+            value={matchType}
+            onChange={e => setMatchType(e.target.value)}
+          >
+            <option value="">na</option>
             <option value="exact">exact</option>
             <option value="phrase">phrase</option>
             <option value="broad">broad</option>
           </select>
 
-          <label className="block mt-4">Adset Date ⓘ (optional)</label>
-          <input type="date" value={adsetDate} onChange={e => setAdsetDate(e.target.value)}
-            className="mt-1 w-full bg-gray-700 border border-gray-600 rounded p-2 pr-10" />
+          <label className="block mt-4 mb-1">
+            Ad Set Date <span>(optional)</span> <span>ⓘ</span>
+          </label>
+          <input
+            type="date"
+            className="input"
+            value={adsetDate}
+            onChange={e => setAdsetDate(e.target.value)}
+          />
         </div>
 
         {/* Ad Name */}
-        <div className="bg-gray-800 p-6 rounded-lg">
-          <h2 className="text-green-400 text-lg font-semibold">Ad Name</h2>
-          <label className="block mt-4">Ad Type ⓘ</label>
-          <select value={adType} onChange={e => setAdType(e.target.value)}
-            className="mt-1 w-full bg-gray-700 border border-gray-600 rounded p-2"
-            disabled={!platform}>
-            <option value="">Select ad type</option>
-            {(AD_TYPES[platform]||[]).map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
+        <div className="card">
+          <h3 className="text-green-500 mb-4">Ad Name</h3>
+          <label className="block mb-1">
+            Ad Type <span>ⓘ</span>
+          </label>
+          <select
+            className="input"
+            value={adType}
+            onChange={e => setAdType(e.target.value)}
+            disabled={!platform}
+          >
+            <option value="">
+              {platform ? 'Select ad type' : 'Select platform first'}
+            </option>
+            {platform &&
+              adTypesByPlatform[platform].map(at => (
+                <option key={at.value} value={at.value}>
+                  {at.value}
+                </option>
+              ))}
           </select>
 
-          <label className="block mt-4">Ad Theme ⓘ (optional)</label>
-          <input value={adTheme} onChange={e => setAdTheme(e.target.value)}
+          <label className="block mt-4 mb-1">
+            Ad Theme <span>ⓘ</span>
+          </label>
+          <input
+            className="input"
             placeholder="Enter ad theme"
-            className="mt-1 w-full bg-gray-700 border border-gray-600 rounded p-2" />
+            value={adTheme}
+            onChange={e => setAdTheme(e.target.value)}
+          />
 
-          <label className="block mt-4">Ad Date ⓘ (optional)</label>
-          <input type="date" value={adDate} onChange={e => setAdDate(e.target.value)}
-            className="mt-1 w-full bg-gray-700 border border-gray-600 rounded p-2 pr-10" />
+          <label className="block mt-4 mb-1">
+            Ad Date <span>ⓘ</span>
+          </label>
+          <input
+            type="date"
+            className="input"
+            value={adDate}
+            onChange={e => setAdDate(e.target.value)}
+          />
         </div>
       </div>
 
-      {/* RIGHT COLUMN */}
-      <div className="space-y-10">
-        <div className="bg-gray-800 p-6 rounded-lg">
-          <h2 className="text-green-400 text-lg font-semibold">Final Result</h2>
-          <div className="mt-4 break-all">{campaignName} <button>📋</button></div>
-          <div className="mt-2 break-all">{adSetName} <button>📋</button></div>
-          <div className="mt-2 break-all">{adName} <button>📋</button></div>
+      {/* Right column */}
+      <div className="space-y-6">
+        {/* Final Result */}
+        <div className="card">
+          <h3 className="text-green-500 mb-4">Final Result</h3>
+          <div className="mb-3">
+            <strong className="block">Campaign Name</strong>
+            <div>
+              {campaignName}{' '}
+              <button className="btn-sm">Copy</button>
+            </div>
+          </div>
+          <div className="mb-3">
+            <strong className="block">Ad Set Name</strong>
+            <div>
+              {adSetName}{' '}
+              <button className="btn-sm">Copy</button>
+            </div>
+          </div>
+          <div>
+            <strong className="block">Ad Name</strong>
+            <div>
+              {adName}{' '}
+              <button className="btn-sm">Copy</button>
+            </div>
+          </div>
         </div>
-        <div className="bg-gray-800 p-6 rounded-lg">
-          <h2 className="text-green-400 text-lg font-semibold">UTM Generator</h2>
-          <button onClick={generateUTM}
-                  className="mt-2 bg-green-500 text-white px-4 py-2 rounded">
-            Generate
-          </button>
-          <div className="mt-4 break-all">{utmString} <button>📋</button></div>
+
+        {/* UTM Generator */}
+        <div className="card">
+          <h3 className="text-green-500 mb-4">UTM Generator</h3>
+          <div className="bg-gray-700 p-3 rounded mb-3 break-all">
+            {utmString || 'No UTM generated yet.'}
+          </div>
+          <div className="flex space-x-4">
+            <button className="btn" onClick={generateUTM}>
+              Generate
+            </button>
+            <button className="btn" onClick={() => {/* copy utmString */}}>
+              Copy
+            </button>
+          </div>
         </div>
-        <div className="bg-gray-800 p-6 rounded-lg">
-          <h2 className="text-green-400 text-lg font-semibold">Landing Page URL</h2>
-          <input id="landing-page" placeholder="https://www.cnn.com/"
-            className="mt-2 w-full bg-gray-700 rounded p-2 border border-gray-600" />
-          <button onClick={generateURL}
-                  className="mt-3 bg-green-500 text-white px-4 py-2 rounded">
-            Generate
-          </button>
-          <div className="mt-4 break-all">{finalUrl} <button>📋</button></div>
+
+        {/* Landing Page URL */}
+        <div className="card">
+          <h3 className="text-green-500 mb-4">Landing Page URL</h3>
+          <input
+            id="landing-page"
+            className="input mb-3"
+            placeholder="https://www.cnn.com/"
+          />
+          <div className="flex space-x-4">
+            <button className="btn" onClick={generateURL}>
+              Generate
+            </button>
+            <button className="btn" onClick={() => {/* copy finalUrl */}}>
+              Copy
+            </button>
+          </div>
+          <div className="bg-gray-700 p-3 rounded mt-3 break-all">
+            {finalUrl || 'Your URL + UTM will appear here.'}
+          </div>
         </div>
       </div>
     </div>
-  );
+  )
 }
